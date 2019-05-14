@@ -29,6 +29,7 @@
 - (void)showShareView{
     RPShareView *view = [[RPShareView alloc] initWithFrame:self.view.bounds];
     [view showFromControlle:self];
+    [view shareWithURL:@"https://open.weixin.qq.com" title:@"打造社区美好生活" description:@"顺道现邀请您参与好人好事，公益活动，新用户注册时填写你的邀请码，您将获得50积分奖励，可在APP内兑换精美礼品，还不快快参与" thumbImage:[UIImage imageNamed:@"AppIcon"]];
 }
 
 @end

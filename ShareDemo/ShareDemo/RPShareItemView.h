@@ -28,6 +28,13 @@ typedef NS_ENUM(NSUInteger, ShareType) {
 @interface RPShareView : UIView
 - (void)showFromControlle:(UIViewController *)controller;
 - (void)setShareContentWithData:(id)data;
+/**
+ @param url 分享内容的目标URL
+ @param title 分享内容的标题
+ @param description 分享内容的描述
+ @param thumbImage 分享内容的预览图像
+ */
+- (void)shareWithURL:(NSString *)url title:(NSString *)title description:(NSString *)description thumbImage:(UIImage *)thumbImage;
 
 @end
 @interface RPShareItemView : UIView

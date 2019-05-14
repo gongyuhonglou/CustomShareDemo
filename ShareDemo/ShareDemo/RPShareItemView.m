@@ -54,6 +54,11 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
 @property (nonatomic, strong) UIButton *cancelButton;
 @property (nonatomic, strong) NSMutableArray *itemArray;
 @property (nonatomic, strong) UIViewController *myViewController;
+
+@property (nonatomic, strong) NSString *shareUrl;// 分享内容的目标URL
+@property (nonatomic, strong) NSString *shareTitle;// 分享内容的标题
+@property (nonatomic, strong) NSString *shareDescript;// 分享内容的描述
+@property (nonatomic, strong) UIImage *shareThumbImage;// 分享内容的预览图像
 @end
 @implementation RPShareView
 -(instancetype)initWithFrame:(CGRect)frame
@@ -79,7 +84,7 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
                                    @"title"     : @"朋友圈",
                                    @"action"    : RPShareHandlePengYouQuan
                                    };
-
+            
             if ([TencentOAuth iphoneQQInstalled] && [WXApi isWXAppInstalled]) {
                 [_itemArray addObject:dic1];
                 [_itemArray addObject:dic2];
@@ -132,7 +137,7 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
         _cancelButton.titleLabel.font = [UIFont systemFontOfSize:16];
         [_cancelButton setTitleColor:RGBA(51, 51, 51, 1) forState:UIControlStateNormal];
         [_cancelButton setBackgroundImage:[self imageWithColor:[UIColor whiteColor] size:CGSizeMake(1.0, 1.0)] forState:UIControlStateNormal];
-//        [_cancelButton setBackgroundImage:[self imageWithColor:RGBA(234, 234, 234, 1) size:CGSizeMake(1.0, 1.0)] forState:UIControlStateHighlighted];
+        //        [_cancelButton setBackgroundImage:[self imageWithColor:RGBA(234, 234, 234, 1) size:CGSizeMake(1.0, 1.0)] forState:UIControlStateHighlighted];
         [_cancelButton addTarget:self action:@selector(tappedCancel) forControlEvents:UIControlEventTouchUpInside];
         [_contenView addSubview:_cancelButton];
     }
@@ -258,26 +263,29 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
     NSLog(@"应用未安装");
 }
 
+- (void)shareWithURL:(NSString *)url title:(NSString *)title description:(NSString *)description thumbImage:(UIImage *)thumbImage {
+    self.shareUrl = url;
+    self.shareTitle = title;
+    self.shareDescript = description;
+    self.shareThumbImage = thumbImage;
+}
+
 #pragma mark -- 分享
 // QQ
 - (void)qqShareBtnAction {
     NSLog(@"QQ分享=======");
     if ([TencentOAuth iphoneQQInstalled]) {
-    
-    NSString *utf8String = @"https://v.qq.com/x/cover/rfgkivnu2k0ylyb/i0013m4f0zt.html";
-    NSString *title = @"这是一个标题";
-    NSString *description = @"内容内容内容内容内容测试测试测试测试测试";
-    NSString *previewImageUrl = @"https://imgsa.baidu.com/forum/w%3D580/sign=a45e927533d12f2ece05ae687fc3d5ff/c6ed5adf8db1cb1396e6cfb1d854564e93584b4f.jpg";
-    QQApiNewsObject *newsObj = [QQApiNewsObject
-                                objectWithURL:[NSURL URLWithString:utf8String]
-                                title:title
-                                description:description
-                                previewImageURL:[NSURL URLWithString:previewImageUrl]];
-    req = [SendMessageToQQReq reqWithContent:newsObj];
-    
-    //将内容分享到qq
-    QQApiSendResultCode sent = [QQApiInterface sendReq:req];
-    
+        
+        QQApiNewsObject *newsObj = [QQApiNewsObject
+                                    objectWithURL:[NSURL URLWithString:self.shareUrl]
+                                    title:self.shareTitle
+                                    description:self.shareDescript
+                                    previewImageData:UIImageJPEGRepresentation(self.shareThumbImage, 1)];
+        req = [SendMessageToQQReq reqWithContent:newsObj];
+        
+        //将内容分享到qq,code返回码
+        //        QQApiSendResultCode sent = [QQApiInterface sendReq:req];
+        [QQApiInterface sendReq:req];
     }else{
         [self handlerNotInstallAppWithTytpe:QQFriend];
     }
@@ -287,12 +295,12 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
     NSLog(@"WeiXin分享=======");
     if ([WXApi isWXAppInstalled]) {
         WXMediaMessage *message = [WXMediaMessage message];
-        message.title = @"分享标题";
-        message.description = @"分享描述";
-        [message setThumbImage:[UIImage imageNamed:@"wx"]];
+        message.title = self.shareTitle;
+        message.description = self.shareDescript;
+        [message setThumbImage:self.shareThumbImage];
         
         WXWebpageObject *webpageObject = [WXWebpageObject object];
-        webpageObject.webpageUrl = @"https://open.weixin.qq.com";
+        webpageObject.webpageUrl = self.shareUrl;
         message.mediaObject = webpageObject;
         
         SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
@@ -301,8 +309,6 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
         
         // 微信好友
         req.scene = WXSceneSession;
-        // 微信朋友圈
-        // req.scene = WXSceneTimeline;
         [WXApi sendReq:req];
     } else {
         [self handlerNotInstallAppWithTytpe:WeChatFriend];
@@ -313,19 +319,18 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
     NSLog(@"pengyouquan分享=======");
     if ([WXApi isWXAppInstalled]) {
         WXMediaMessage *message = [WXMediaMessage message];
-        message.title = @"分享标题";
-        message.description = @"分享描述";
-        [message setThumbImage:[UIImage imageNamed:@"wx"]];
+        message.title = self.shareTitle;
+        message.description = self.shareDescript;
+        [message setThumbImage:self.shareThumbImage];
         
         WXWebpageObject *webpageObject = [WXWebpageObject object];
-        webpageObject.webpageUrl = @"https://open.weixin.qq.com";
+        webpageObject.webpageUrl = self.shareUrl;
         message.mediaObject = webpageObject;
         
         SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
         req.bText = NO;
         req.message = message;
-        // 微信好友
-        //    req.scene = WXSceneSession;
+        
         // 微信朋友圈
         req.scene = WXSceneTimeline;
         [WXApi sendReq:req];
@@ -364,19 +369,19 @@ NSString *const  RPShareHandleEmail = @"RPShareHandleEmail";
 //whatsapp 分享
 - (void)whatsappShareBtnAction{
     NSLog(@"whatsapp分享");
-    NSString *content = [@"内容内容内容" stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
-    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",content]];
-    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
-//        [[UIApplication sharedApplication] openURL: whatsappURL];
-        [[UIApplication sharedApplication] openURL:whatsappURL options:@{} completionHandler:^(BOOL success) {}];
-    }
+    //    NSString *content = [@"内容内容内容" stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+    //    NSURL *whatsappURL = [NSURL URLWithString:[NSString stringWithFormat:@"whatsapp://send?text=%@",content]];
+    //    if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
+    //        //        [[UIApplication sharedApplication] openURL: whatsappURL];
+    //        [[UIApplication sharedApplication] openURL:whatsappURL options:@{} completionHandler:^(BOOL success) {}];
+    //    }
     
 }
 //邮件分享
 - (void)emailShareBtnAction{
     //判断用户是否已设置邮件账户
     if ([MFMailComposeViewController canSendMail]) {
-        [self sendEmailActionWithModel:nil];
+        //        [self sendEmailActionWithModel:nil];
     }else{
         //给出提示,设备未开启邮件服务
         //        [SVProgressHUD showInfoWithStatus:@"设备未开启邮件服务"];
